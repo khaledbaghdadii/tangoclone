@@ -288,7 +288,6 @@ function generatePuzzle(n, difficulty) {
 
 // ---------------- React Components ----------------
 
-// Updated PuzzleBoard that shows constraints on the grid.
 function PuzzleBoard({ puzzle, givens, onCellClick, errorCells, puzzleData }) {
   const n = puzzle.length;
   const gridSize = 2 * n - 1;
@@ -350,12 +349,21 @@ function PuzzleBoard({ puzzle, givens, onCellClick, errorCells, puzzleData }) {
         const key = `constraint-${i}-${j}`;
         const symbol = constraintMap[`${i},${j}`] || "";
         gridItems.push(
-          <div key={key} className="constraint">
+          <div
+            key={key}
+            className={`constraint ${
+              symbol === "="
+                ? "constraint-equal"
+                : symbol === "X"
+                ? "constraint-opposite"
+                : ""
+            }`}
+          >
             {symbol}
           </div>
         );
       } else {
-        // Intersection cell, left empty.
+        // Intersection (small square in the grid) left empty.
         gridItems.push(
           <div key={`empty-${i}-${j}`} className="constraint-empty"></div>
         );
@@ -373,12 +381,26 @@ function PuzzleBoard({ puzzle, givens, onCellClick, errorCells, puzzleData }) {
   );
 }
 
+// A simple Modal component for the winning message
+function Modal({ message, onClose }) {
+  return (
+    <div className="modal-overlay">
+      <div className="modal">
+        <h2>Congratulations!</h2>
+        <p>{message}</p>
+        <button onClick={onClose}>Close</button>
+      </div>
+    </div>
+  );
+}
+
 function App() {
   const [difficulty, setDifficulty] = useState("medium");
   const [puzzleData, setPuzzleData] = useState(null);
   const [userBoard, setUserBoard] = useState(null);
   const [message, setMessage] = useState({ text: "", color: "" });
   const [errorCells, setErrorCells] = useState([]);
+  const [showModal, setShowModal] = useState(false);
 
   // Generate a new puzzle when difficulty changes.
   useEffect(() => {
@@ -386,7 +408,7 @@ function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [difficulty]);
 
-  // Delay error validation by 1.5 seconds.
+  // Delay error validation by 1.5 seconds after each board change.
   useEffect(() => {
     if (userBoard && puzzleData) {
       const timer = setTimeout(() => {
@@ -418,12 +440,15 @@ function App() {
           }
           if (!correct) break;
         }
-        if (correct)
+        if (correct) {
           setMessage({
-            text: "Congratulations! Puzzle solved.",
+            text: "You have successfully completed the puzzle!",
             color: "green",
           });
-        else setMessage({ text: "Solution is not correct.", color: "red" });
+          setShowModal(true);
+        } else {
+          setMessage({ text: "Solution is not correct.", color: "red" });
+        }
       } else {
         setMessage({ text: "", color: "" });
       }
@@ -436,6 +461,7 @@ function App() {
     setUserBoard(deepCopy(data.puzzle));
     setMessage({ text: "", color: "" });
     setErrorCells([]);
+    setShowModal(false);
   };
 
   // Cycle cell value on click (if editable).
@@ -453,7 +479,27 @@ function App() {
 
   return (
     <div className="App">
-      <h1>Tango Puzzle</h1>
+      <h1 className="main-title">Tango Puzzle</h1>
+      <h2 className="subtitle">Place suns and moons to solve the puzzle!</h2>
+
+      <div className="instructions">
+        <p>
+          <strong>Rules:</strong>
+        </p>
+        <ul>
+          <li>No more than half of each row or column can be suns or moons.</li>
+          <li>Avoid having three of the same symbol in a row/column.</li>
+          <li>
+            Cells connected by <span className="equal-hint">"="</span> must have
+            the same symbol.
+          </li>
+          <li>
+            Cells connected by <span className="opposite-hint">"X"</span> must
+            have different symbols.
+          </li>
+        </ul>
+      </div>
+
       <div className="controls">
         <label>
           Difficulty:
@@ -466,22 +512,33 @@ function App() {
             <option value="hard">Hard</option>
           </select>
         </label>
-        <button onClick={generateNewPuzzle}>New Puzzle</button>
+        <button className="new-puzzle-button" onClick={generateNewPuzzle}>
+          New Puzzle
+        </button>
       </div>
-      {puzzleData && userBoard && (
-        <PuzzleBoard
-          puzzle={userBoard}
-          givens={puzzleData.givens}
-          onCellClick={handleCellClick}
-          errorCells={errorCells}
-          puzzleData={puzzleData}
-        />
-      )}
-      <div className="buttons">{/* Additional buttons can go here */}</div>
-      {message.text && (
+
+      <div className="puzzle-container">
+        {puzzleData && userBoard && (
+          <PuzzleBoard
+            puzzle={userBoard}
+            givens={puzzleData.givens}
+            onCellClick={handleCellClick}
+            errorCells={errorCells}
+            puzzleData={puzzleData}
+          />
+        )}
+      </div>
+
+      {/* Only show inline message if it's NOT a winning message */}
+      {message.text && message.color === "red" && (
         <div className="message" style={{ color: message.color }}>
           {message.text}
         </div>
+      )}
+
+      {/* Modal for winning message */}
+      {showModal && (
+        <Modal message={message.text} onClose={() => setShowModal(false)} />
       )}
     </div>
   );
