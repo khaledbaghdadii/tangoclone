@@ -86,6 +86,40 @@
   background-color: #4281c7;
 }
 
+/* Timer */
+.timer-display {
+  font-size: 1.2rem;
+  margin-bottom: 1rem;
+  color: #444;
+}
+
+/* Additional Buttons (Undo, Clear) */
+.buttons {
+  margin-bottom: 1rem;
+}
+
+.undo-button,
+.clear-button {
+  background-color: #f6f6f6;
+  color: #444;
+  border: 1px solid #ccc;
+  padding: 8px 16px;
+  cursor: pointer;
+  border-radius: 4px;
+  font-weight: 500;
+  margin: 0 8px;
+}
+
+.undo-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.undo-button:hover:not(:disabled),
+.clear-button:hover {
+  background-color: #eaeaea;
+}
+
 /* Puzzle Container */
 .puzzle-container {
   display: flex;
@@ -171,7 +205,7 @@
   font-size: 22px;
 }
 
-/* Message (success or error) */
+/* Message (error) */
 .message {
   margin-top: 20px;
   font-size: 1.2rem;
