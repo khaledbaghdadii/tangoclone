@@ -1,0 +1,54 @@
+.App {
+  text-align: center;
+  font-family: Arial, sans-serif;
+  padding: 20px;
+}
+
+.controls {
+  margin-bottom: 20px;
+}
+
+.puzzle-board {
+  display: inline-block;
+  border: 2px solid #333;
+}
+
+.puzzle-row {
+  display: flex;
+}
+
+.puzzle-cell {
+  width: 50px;
+  height: 50px;
+  border: 1px solid #777;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+.puzzle-cell.given {
+  background-color: #ddd;
+  font-weight: bold;
+}
+
+.puzzle-cell.editable:hover {
+  background-color: #eef;
+}
+
+.buttons {
+  margin-top: 20px;
+}
+
+.message {
+  margin-top: 10px;
+  font-size: 18px;
+  color: green;
+}
+
+.constraints {
+  margin-top: 20px;
+  text-align: left;
+  display: inline-block;
+}
