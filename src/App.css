@@ -139,8 +139,6 @@
 
 /* Puzzle cells (actual game cells) */
 .puzzle-cell {
-  width: 40px;
-  height: 40px;
   background: #ffffff;
   border: 1px solid #ddd;
   display: flex;
@@ -171,8 +169,6 @@
 
 /* Constraint cells (between puzzle cells) */
 .constraint {
-  width: 40px;
-  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -258,4 +254,107 @@
 
 .modal button:hover {
   background-color: #4281c7;
+}
+
+/* The puzzle board container */
+.puzzle-board-grid {
+  display: grid;
+  gap: 2px;
+  /* We'll use our custom variable --grid-size to set the columns */
+  grid-template-columns: repeat(var(--grid-size), 1fr);
+
+  /* A nice default width for large screens */
+  max-width: 600px;
+  width: 100%;
+
+  /* Center the grid */
+  margin: 0 auto;
+  transition: all 0.2s ease-in-out;
+}
+
+/* Make the puzzle board shrink to fit smaller screens */
+@media (max-width: 768px) {
+  .puzzle-board-grid {
+    /* Let it be as wide as 90% of the viewport, whichever is smaller */
+    max-width: 90vw;
+  }
+}
+
+/* Puzzle cells (actual game cells), constraints, etc.
+   Use aspect-ratio to keep them squares as the grid resizes.
+   Remove the fixed width and height. */
+.puzzle-cell,
+.constraint,
+.constraint-empty {
+  aspect-ratio: 1 / 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* If you want a minimum size so they never become *too* small, add: */
+.puzzle-cell,
+.constraint,
+.constraint-empty {
+  min-width: 20px;
+  min-height: 20px;
+}
+
+/* Keep your existing styles, but remove the width/height from puzzle-cell */
+.puzzle-cell {
+  background: #ffffff;
+  border: 1px solid #ddd;
+  cursor: pointer;
+  position: relative;
+  font-size: 1.4rem;
+  transition: background 0.2s, box-shadow 0.2s;
+  border-radius: 4px;
+}
+
+.puzzle-cell.given {
+  background: #f1f1f1;
+  cursor: default;
+  font-weight: bold;
+}
+
+.puzzle-cell.editable:hover {
+  background: #fafafa;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.05);
+}
+
+.puzzle-cell.error {
+  background: #ffe3e3; /* Light red background for errors */
+  border-color: #ffaaaa;
+}
+
+/* Constraint cells (between puzzle cells) */
+.constraint {
+  /* No fixed width/height, just keep it flexible */
+  border: none;
+  font-weight: bold;
+  font-size: 1.2rem;
+  color: #999;
+}
+
+.constraint-equal {
+  color: green;
+}
+
+.constraint-opposite {
+  color: red;
+}
+
+.constraint-empty {
+  /* just an empty cell for spacing */
+}
+
+/* Sun/Moon icons can stay as is, or adapt font-size if needed. */
+.sun {
+  color: #f5a623;
+  font-size: 22px;
+}
+
+.moon {
+  color: #4a90e2;
+  font-size: 22px;
 }

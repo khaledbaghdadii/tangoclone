@@ -392,11 +392,12 @@ function PuzzleBoard({ puzzle, givens, onCellClick, errorCells, puzzleData }) {
     }
   }
 
+  // Return the puzzle grid
   return (
     <div
       className="puzzle-board-grid"
       style={{
-        gridTemplateColumns: `repeat(${gridSize}, 40px)`,
+        "--grid-size": gridSize, // pass this to CSS as a variable
       }}
     >
       {gridItems}
