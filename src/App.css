@@ -136,7 +136,6 @@
 .puzzle-cell.given {
   background: #f1f1f1;
   cursor: default;
-  font-weight: bold;
 }
 
 .puzzle-cell.editable:hover {
