@@ -1,54 +1,72 @@
 .App {
   text-align: center;
-  font-family: Arial, sans-serif;
-  padding: 20px;
+  font-family: sans-serif;
 }
 
 .controls {
   margin-bottom: 20px;
 }
 
-.puzzle-board {
-  display: inline-block;
-  border: 2px solid #333;
+.puzzle-board-grid {
+  display: grid;
+  gap: 2px;
+  justify-content: center;
+  margin: 0 auto;
 }
 
-.puzzle-row {
-  display: flex;
-}
-
+/* Puzzle cells (actual game cells) */
 .puzzle-cell {
-  width: 50px;
-  height: 50px;
-  border: 1px solid #777;
+  width: 40px;
+  height: 40px;
+  background: white;
+  border: 1px solid #ccc;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 24px;
   cursor: pointer;
 }
 
 .puzzle-cell.given {
-  background-color: #ddd;
-  font-weight: bold;
+  background: #eee;
+  cursor: default;
 }
 
 .puzzle-cell.editable:hover {
-  background-color: #eef;
+  background: #f9f9f9;
 }
 
-.buttons {
-  margin-top: 20px;
+.puzzle-cell.error {
+  background: #fdd;
+}
+
+/* Constraint cells (between puzzle cells) */
+.constraint {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 18px;
+}
+
+.constraint-empty {
+  width: 40px;
+  height: 40px;
+}
+
+/* Icons */
+.sun {
+  color: orange;
+  font-size: 24px;
+}
+
+.moon {
+  color: navy;
+  font-size: 24px;
 }
 
 .message {
-  margin-top: 10px;
-  font-size: 18px;
-  color: green;
-}
-
-.constraints {
   margin-top: 20px;
-  text-align: left;
-  display: inline-block;
+  font-size: 18px;
 }

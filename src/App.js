@@ -3,29 +3,29 @@ import "./App.css";
 
 const BOARD_SIZE = 6;
 
-// --------- Helper Functions for Puzzle Generation and Solving ---------
+// ---------------- Helper Functions ----------------
 
-// Deep copy a 2D board array.
+// Deep copy a 2D board.
 function deepCopy(board) {
   return board.map((row) => row.slice());
 }
 
-// Count occurrences of a given value in an array.
+// Count occurrences of a value in an array.
 function countVal(arr, val) {
   return arr.filter((x) => x === val).length;
 }
 
-// Check if any three consecutive cells (already assigned) are identical.
+// Check if an array has three consecutive same non-null values.
 function violatesAdjacent(arr) {
   for (let i = 0; i < arr.length - 2; i++) {
-    if (arr[i] !== null && arr[i + 1] !== null && arr[i + 2] !== null) {
-      if (arr[i] === arr[i + 1] && arr[i + 1] === arr[i + 2]) return true;
+    if (arr[i] !== null && arr[i] === arr[i + 1] && arr[i + 1] === arr[i + 2]) {
+      return true;
     }
   }
   return false;
 }
 
-// Test whether placing val at (r,c) in board keeps row/column balance and adjacent rule.
+// Validate assignment at (r,c) in board.
 function isValidAssignment(board, r, c, val, n) {
   board[r][c] = val;
   const row = board[r];
@@ -50,7 +50,7 @@ function isValidAssignment(board, r, c, val, n) {
   return true;
 }
 
-// Generate a full valid solution board using recursive backtracking.
+// Generate a complete solution board via backtracking.
 function generateFullSolution(n) {
   const board = Array.from({ length: n }, () => Array(n).fill(null));
   function backtrack(pos) {
@@ -70,7 +70,7 @@ function generateFullSolution(n) {
   return backtrack(0) ? board : null;
 }
 
-// Generate extra constraints (equal or opposite) from adjacent cell pairs.
+// Generate extra constraints (equal or opposite) from adjacent pairs.
 function generateExtraConstraints(fullBoard, extraCount) {
   const n = fullBoard.length;
   let candidates = [];
@@ -106,7 +106,7 @@ function generateExtraConstraints(fullBoard, extraCount) {
   return { equalsConstraints, oppositeConstraints };
 }
 
-// Backtracking solver that counts solutions (stops after reaching limit).
+// Backtracking puzzle solver (counts solutions up to a given limit).
 function solvePuzzle(board, eqConstraints, oppConstraints, limit = 2) {
   const n = board.length;
   let count = { value: 0 };
@@ -156,12 +156,81 @@ function solvePuzzle(board, eqConstraints, oppConstraints, limit = 2) {
   return count.value;
 }
 
-// Check if the puzzle has a unique solution.
+// Check whether the puzzle has a unique solution.
 function hasUniqueSolution(puzzle, eqConstraints, oppConstraints) {
   return solvePuzzle(deepCopy(puzzle), eqConstraints, oppConstraints, 2) === 1;
 }
 
-// Generate a puzzle by starting with a full solution and then removing cells.
+// Validate the board to see which cells (if any) are involved in rule violations.
+function validateBoard(board, eqConstraints, oppConstraints) {
+  const n = board.length;
+  const errors = new Set();
+  // Check rows.
+  for (let r = 0; r < n; r++) {
+    const row = board[r];
+    if (countVal(row, true) > n / 2 || countVal(row, false) > n / 2) {
+      for (let c = 0; c < n; c++) errors.add(`${r}-${c}`);
+    }
+    for (let c = 0; c < n - 2; c++) {
+      if (
+        row[c] !== null &&
+        row[c] === row[c + 1] &&
+        row[c + 1] === row[c + 2]
+      ) {
+        errors.add(`${r}-${c}`);
+        errors.add(`${r}-${c + 1}`);
+        errors.add(`${r}-${c + 2}`);
+      }
+    }
+  }
+  // Check columns.
+  for (let c = 0; c < n; c++) {
+    const col = board.map((r) => r[c]);
+    if (countVal(col, true) > n / 2 || countVal(col, false) > n / 2) {
+      for (let r = 0; r < n; r++) errors.add(`${r}-${c}`);
+    }
+    for (let r = 0; r < n - 2; r++) {
+      if (
+        col[r] !== null &&
+        col[r] === col[r + 1] &&
+        col[r + 1] === col[r + 2]
+      ) {
+        errors.add(`${r}-${c}`);
+        errors.add(`${r + 1}-${c}`);
+        errors.add(`${r + 2}-${c}`);
+      }
+    }
+  }
+  // Check extra constraints.
+  for (let pair of eqConstraints) {
+    const [[r1, c1], [r2, c2]] = pair;
+    if (
+      board[r1][c1] !== null &&
+      board[r2][c2] !== null &&
+      board[r1][c1] !== board[r2][c2]
+    ) {
+      errors.add(`${r1}-${c1}`);
+      errors.add(`${r2}-${c2}`);
+    }
+  }
+  for (let pair of oppConstraints) {
+    const [[r1, c1], [r2, c2]] = pair;
+    if (
+      board[r1][c1] !== null &&
+      board[r2][c2] !== null &&
+      board[r1][c1] === board[r2][c2]
+    ) {
+      errors.add(`${r1}-${c1}`);
+      errors.add(`${r2}-${c2}`);
+    }
+  }
+  return Array.from(errors).map((str) => {
+    const [r, c] = str.split("-").map(Number);
+    return { r, c };
+  });
+}
+
+// Generate a puzzle by removing cells from a full solution.
 function generatePuzzle(n, difficulty) {
   const totalCells = n * n;
   let targetGiven, extraCount;
@@ -217,26 +286,89 @@ function generatePuzzle(n, difficulty) {
   };
 }
 
-// --------- React Components ---------
+// ---------------- React Components ----------------
 
-// The puzzle board UI – each cell displays a symbol (or is blank)
-// and is styled as either a "given" (non-editable) or "editable" cell.
-function PuzzleBoard({ puzzle, givens, onCellClick }) {
+// Updated PuzzleBoard that shows constraints on the grid.
+function PuzzleBoard({ puzzle, givens, onCellClick, errorCells, puzzleData }) {
+  const n = puzzle.length;
+  const gridSize = 2 * n - 1;
+
+  // Build a map for constraints using grid coordinates.
+  const constraintMap = {};
+  if (puzzleData) {
+    puzzleData.equalsConstraints.forEach((pair) => {
+      const [[r1, c1], [r2, c2]] = pair;
+      if (r1 === r2) {
+        const row = 2 * r1;
+        const col = 2 * Math.min(c1, c2) + 1;
+        constraintMap[`${row},${col}`] = "=";
+      } else if (c1 === c2) {
+        const row = 2 * Math.min(r1, r2) + 1;
+        const col = 2 * c1;
+        constraintMap[`${row},${col}`] = "=";
+      }
+    });
+    puzzleData.oppositeConstraints.forEach((pair) => {
+      const [[r1, c1], [r2, c2]] = pair;
+      if (r1 === r2) {
+        const row = 2 * r1;
+        const col = 2 * Math.min(c1, c2) + 1;
+        constraintMap[`${row},${col}`] = "X";
+      } else if (c1 === c2) {
+        const row = 2 * Math.min(r1, r2) + 1;
+        const col = 2 * c1;
+        constraintMap[`${row},${col}`] = "X";
+      }
+    });
+  }
+
+  const gridItems = [];
+  for (let i = 0; i < gridSize; i++) {
+    for (let j = 0; j < gridSize; j++) {
+      if (i % 2 === 0 && j % 2 === 0) {
+        // Puzzle cell.
+        const r = i / 2;
+        const c = j / 2;
+        const isError = errorCells.some((err) => err.r === r && err.c === c);
+        gridItems.push(
+          <div
+            key={`cell-${r}-${c}`}
+            className={`puzzle-cell ${givens[r][c] ? "given" : "editable"} ${
+              isError ? "error" : ""
+            }`}
+            onClick={() => onCellClick(r, c)}
+          >
+            {puzzle[r][c] !== null && (
+              <span className={puzzle[r][c] ? "sun" : "moon"}>
+                {puzzle[r][c] ? "☀" : "☾"}
+              </span>
+            )}
+          </div>
+        );
+      } else if ((i % 2 === 0 && j % 2 === 1) || (i % 2 === 1 && j % 2 === 0)) {
+        // Constraint cell (horizontal or vertical).
+        const key = `constraint-${i}-${j}`;
+        const symbol = constraintMap[`${i},${j}`] || "";
+        gridItems.push(
+          <div key={key} className="constraint">
+            {symbol}
+          </div>
+        );
+      } else {
+        // Intersection cell, left empty.
+        gridItems.push(
+          <div key={`empty-${i}-${j}`} className="constraint-empty"></div>
+        );
+      }
+    }
+  }
+
   return (
-    <div className="puzzle-board">
-      {puzzle.map((row, r) => (
-        <div key={r} className="puzzle-row">
-          {row.map((cell, c) => (
-            <div
-              key={c}
-              className={`puzzle-cell ${givens[r][c] ? "given" : "editable"}`}
-              onClick={() => onCellClick(r, c)}
-            >
-              {cell === null ? "" : cell ? "☀" : "☾"}
-            </div>
-          ))}
-        </div>
-      ))}
+    <div
+      className="puzzle-board-grid"
+      style={{ gridTemplateColumns: `repeat(${gridSize}, 40px)` }}
+    >
+      {gridItems}
     </div>
   );
 }
@@ -245,22 +377,68 @@ function App() {
   const [difficulty, setDifficulty] = useState("medium");
   const [puzzleData, setPuzzleData] = useState(null);
   const [userBoard, setUserBoard] = useState(null);
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState({ text: "", color: "" });
+  const [errorCells, setErrorCells] = useState([]);
 
-  // Generate a new puzzle when the component mounts or when difficulty changes.
+  // Generate a new puzzle when difficulty changes.
   useEffect(() => {
     generateNewPuzzle();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [difficulty]);
 
+  // Delay error validation by 1.5 seconds.
+  useEffect(() => {
+    if (userBoard && puzzleData) {
+      const timer = setTimeout(() => {
+        const errors = validateBoard(
+          userBoard,
+          puzzleData.equalsConstraints,
+          puzzleData.oppositeConstraints
+        );
+        setErrorCells(errors);
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [userBoard, puzzleData]);
+
+  // Auto-check solution when all cells are filled.
+  useEffect(() => {
+    if (userBoard && puzzleData) {
+      const complete = userBoard.every((row) =>
+        row.every((cell) => cell !== null)
+      );
+      if (complete) {
+        let correct = true;
+        for (let r = 0; r < BOARD_SIZE; r++) {
+          for (let c = 0; c < BOARD_SIZE; c++) {
+            if (userBoard[r][c] !== puzzleData.fullBoard[r][c]) {
+              correct = false;
+              break;
+            }
+          }
+          if (!correct) break;
+        }
+        if (correct)
+          setMessage({
+            text: "Congratulations! Puzzle solved.",
+            color: "green",
+          });
+        else setMessage({ text: "Solution is not correct.", color: "red" });
+      } else {
+        setMessage({ text: "", color: "" });
+      }
+    }
+  }, [userBoard, puzzleData]);
+
   const generateNewPuzzle = () => {
     const data = generatePuzzle(BOARD_SIZE, difficulty);
     setPuzzleData(data);
     setUserBoard(deepCopy(data.puzzle));
-    setMessage("");
+    setMessage({ text: "", color: "" });
+    setErrorCells([]);
   };
 
-  // For editable cells, cycle through: (null → true → false → null)
+  // Cycle cell value on click (if editable).
   const handleCellClick = (r, c) => {
     if (!puzzleData.givens[r][c]) {
       setUserBoard((prev) => {
@@ -271,27 +449,6 @@ function App() {
         return newBoard;
       });
     }
-  };
-
-  // Check whether the current user board matches the full solution.
-  const checkSolution = () => {
-    if (!puzzleData) return;
-    const { fullBoard } = puzzleData;
-    for (let r = 0; r < BOARD_SIZE; r++) {
-      for (let c = 0; c < BOARD_SIZE; c++) {
-        if (userBoard[r][c] === null || userBoard[r][c] !== fullBoard[r][c]) {
-          setMessage("Solution is not correct.");
-          return;
-        }
-      }
-    }
-    setMessage("Congratulations! Puzzle solved.");
-  };
-
-  // Optionally show the solution.
-  const showSolution = () => {
-    if (!puzzleData) return;
-    setUserBoard(deepCopy(puzzleData.fullBoard));
   };
 
   return (
@@ -316,32 +473,16 @@ function App() {
           puzzle={userBoard}
           givens={puzzleData.givens}
           onCellClick={handleCellClick}
+          errorCells={errorCells}
+          puzzleData={puzzleData}
         />
       )}
-      <div className="buttons">
-        <button onClick={checkSolution}>Check Solution</button>
-        <button onClick={showSolution}>Show Solution</button>
-      </div>
-      {message && <div className="message">{message}</div>}
-      <div className="constraints">
-        <h3>Extra Clues:</h3>
-        {puzzleData && (
-          <div>
-            {puzzleData.equalsConstraints.map((pair, idx) => (
-              <div key={`eq-${idx}`}>
-                Cells ({pair[0][0]},{pair[0][1]}) and ({pair[1][0]},{pair[1][1]}
-                ) must be EQUAL (=)
-              </div>
-            ))}
-            {puzzleData.oppositeConstraints.map((pair, idx) => (
-              <div key={`opp-${idx}`}>
-                Cells ({pair[0][0]},{pair[0][1]}) and ({pair[1][0]},{pair[1][1]}
-                ) must be OPPOSITE (X)
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+      <div className="buttons">{/* Additional buttons can go here */}</div>
+      {message.text && (
+        <div className="message" style={{ color: message.color }}>
+          {message.text}
+        </div>
+      )}
     </div>
   );
 }
