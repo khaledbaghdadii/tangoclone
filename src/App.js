@@ -272,12 +272,14 @@ function generatePuzzle(difficulty) {
   const puzzle = deepCopy(fullBoard);
   const givens = Array.from({ length: n }, () => Array(n).fill(true));
   let currentGiven = totalCells;
+
   let positions = [];
   for (let r = 0; r < n; r++) {
     for (let c = 0; c < n; c++) {
       positions.push([r, c]);
     }
   }
+
   positions.sort(() => Math.random() - 0.5);
   for (let [r, c] of positions) {
     if (currentGiven <= targetGiven) break;
@@ -311,9 +313,10 @@ function generatePuzzle(difficulty) {
 
 function PuzzleBoard({ puzzle, givens, onCellClick, errorCells, puzzleData }) {
   const n = puzzleData.size;
+  // 2n - 1 is total grid cells in each dimension including constraint spaces
   const gridSize = 2 * n - 1;
 
-  // Build a map for constraints using grid coordinates.
+  // Build a map for constraints using grid coordinates (unchanged)
   const constraintMap = {};
   if (puzzleData) {
     puzzleData.equalsConstraints.forEach((pair) => {
@@ -342,11 +345,12 @@ function PuzzleBoard({ puzzle, givens, onCellClick, errorCells, puzzleData }) {
     });
   }
 
+  // Build our grid items
   const gridItems = [];
   for (let i = 0; i < gridSize; i++) {
     for (let j = 0; j < gridSize; j++) {
+      // Puzzle cells (i and j both even)
       if (i % 2 === 0 && j % 2 === 0) {
-        // Puzzle cell.
         const r = i / 2;
         const c = j / 2;
         const isError = errorCells.some((err) => err.r === r && err.c === c);
@@ -365,8 +369,9 @@ function PuzzleBoard({ puzzle, givens, onCellClick, errorCells, puzzleData }) {
             )}
           </div>
         );
-      } else if ((i % 2 === 0 && j % 2 === 1) || (i % 2 === 1 && j % 2 === 0)) {
-        // Constraint cell (horizontal or vertical).
+      }
+      // Constraint cells (horizontal or vertical)
+      else if ((i % 2 === 0 && j % 2 === 1) || (i % 2 === 1 && j % 2 === 0)) {
         const key = `constraint-${i}-${j}`;
         const symbol = constraintMap[`${i},${j}`] || "";
         gridItems.push(
@@ -383,8 +388,9 @@ function PuzzleBoard({ puzzle, givens, onCellClick, errorCells, puzzleData }) {
             {symbol}
           </div>
         );
-      } else {
-        // Intersection (small square in the grid) left empty.
+      }
+      // Intersection/empty squares
+      else {
         gridItems.push(
           <div key={`empty-${i}-${j}`} className="constraint-empty"></div>
         );
@@ -392,12 +398,11 @@ function PuzzleBoard({ puzzle, givens, onCellClick, errorCells, puzzleData }) {
     }
   }
 
-  // Return the puzzle grid
   return (
     <div
       className="puzzle-board-grid"
       style={{
-        "--grid-size": gridSize, // pass this to CSS as a variable
+        "--grid-size": gridSize,
       }}
     >
       {gridItems}
@@ -405,7 +410,7 @@ function PuzzleBoard({ puzzle, givens, onCellClick, errorCells, puzzleData }) {
   );
 }
 
-// A simple Modal component for the winning message
+// Simple Modal
 function Modal({ message, time, onClose }) {
   return (
     <div className="modal-overlay">
@@ -419,6 +424,7 @@ function Modal({ message, time, onClose }) {
   );
 }
 
+// ---------------- Main App ----------------
 function App() {
   const [difficulty, setDifficulty] = useState("medium");
   const [puzzleData, setPuzzleData] = useState(null);
@@ -427,20 +433,20 @@ function App() {
   const [errorCells, setErrorCells] = useState([]);
   const [showModal, setShowModal] = useState(false);
 
-  // Timer states
+  // Timer
   const [time, setTime] = useState(0);
   const timerRef = useRef(null);
 
-  // Board history for Undo
+  // Board history (for Undo)
   const [history, setHistory] = useState([]);
 
-  // Generate a new puzzle when difficulty changes.
+  // Generate puzzle on difficulty change
   useEffect(() => {
     generateNewPuzzle();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line
   }, [difficulty]);
 
-  // Delay error validation by 1.5 seconds after each board change.
+  // Validate board errors (with 1.5s delay)
   useEffect(() => {
     if (userBoard && puzzleData) {
       const timer = setTimeout(() => {
@@ -455,14 +461,16 @@ function App() {
     }
   }, [userBoard, puzzleData]);
 
-  // Auto-check solution when all cells are filled.
+  // Auto-check solution when all cells are filled
   useEffect(() => {
     if (userBoard && puzzleData) {
       const n = puzzleData.size;
+      // Check if board is fully filled
       const complete = userBoard.every((row) =>
         row.every((cell) => cell !== null)
       );
       if (complete) {
+        // Compare with full solution
         let correct = true;
         for (let r = 0; r < n; r++) {
           for (let c = 0; c < n; c++) {
@@ -489,6 +497,7 @@ function App() {
     }
   }, [userBoard, puzzleData]);
 
+  // Generate a new puzzle
   const generateNewPuzzle = () => {
     const data = generatePuzzle(difficulty);
     setPuzzleData(data);
@@ -498,17 +507,13 @@ function App() {
     setShowModal(false);
     resetTimer();
     startTimer();
-
-    // Reset history
     setHistory([]);
   };
 
-  // Handle cell click with Undo integration
+  // Handle cell click (and push state to history for Undo)
   const handleCellClick = (r, c) => {
     if (!puzzleData.givens[r][c]) {
-      // Before changing the board, store the current state in history
       setHistory((prevHist) => [...prevHist, deepCopy(userBoard)]);
-
       setUserBoard((prev) => {
         const newBoard = deepCopy(prev);
         if (newBoard[r][c] === null) newBoard[r][c] = true;
@@ -519,7 +524,7 @@ function App() {
     }
   };
 
-  // Undo: revert to previous state if possible
+  // Undo
   const handleUndo = () => {
     if (history.length > 0) {
       const prevState = history[history.length - 1];
@@ -528,16 +533,13 @@ function App() {
     }
   };
 
-  // Clear all editable cells
+  // Clear non-given cells
   const handleClear = () => {
-    if (!userBoard) return;
-    // store current state for undo
+    if (!userBoard || !puzzleData) return;
     setHistory((prevHist) => [...prevHist, deepCopy(userBoard)]);
-
     const newBoard = deepCopy(userBoard);
-    const n = puzzleData.size;
-    for (let r = 0; r < n; r++) {
-      for (let c = 0; c < n; c++) {
+    for (let r = 0; r < puzzleData.size; r++) {
+      for (let c = 0; c < puzzleData.size; c++) {
         if (!puzzleData.givens[r][c]) {
           newBoard[r][c] = null;
         }
@@ -546,26 +548,26 @@ function App() {
     setUserBoard(newBoard);
   };
 
-  // Timer control
+  // Timer controls
   const startTimer = () => {
-    if (timerRef.current) return; // prevent multiple intervals
-    timerRef.current = setInterval(() => {
-      setTime((prev) => prev + 1);
-    }, 1000);
+    if (!timerRef.current) {
+      timerRef.current = setInterval(() => {
+        setTime((prev) => prev + 1);
+      }, 1000);
+    }
   };
-
   const stopTimer = () => {
     if (timerRef.current) {
       clearInterval(timerRef.current);
       timerRef.current = null;
     }
   };
-
   const resetTimer = () => {
     stopTimer();
     setTime(0);
   };
 
+  // Close modal
   const closeModal = () => {
     setShowModal(false);
   };
@@ -575,24 +577,7 @@ function App() {
       <h1 className="main-title">Tango Puzzle</h1>
       <h2 className="subtitle">Place suns and moons to solve the puzzle!</h2>
 
-      <div className="instructions">
-        <p>
-          <strong>Rules:</strong>
-        </p>
-        <ul>
-          <li>No more than half of each row or column can be suns or moons.</li>
-          <li>Avoid having three of the same symbol in a row or column.</li>
-          <li>
-            Cells connected by <span className="equal-hint">"="</span> must have
-            the same symbol.
-          </li>
-          <li>
-            Cells connected by <span className="opposite-hint">"X"</span> must
-            have different symbols.
-          </li>
-        </ul>
-      </div>
-
+      {/* Controls at top */}
       <div className="controls">
         <label>
           Difficulty:
@@ -611,12 +596,12 @@ function App() {
         </button>
       </div>
 
-      {/* Timer display */}
+      {/* Timer */}
       <div className="timer-display">
         <strong>Time:</strong> {time} seconds
       </div>
 
-      {/* Additional buttons for Undo and Clear */}
+      {/* Undo / Clear */}
       <div className="buttons">
         <button
           className="undo-button"
@@ -630,6 +615,7 @@ function App() {
         </button>
       </div>
 
+      {/* Puzzle goes here */}
       <div className="puzzle-container">
         {puzzleData && userBoard && (
           <PuzzleBoard
@@ -642,17 +628,36 @@ function App() {
         )}
       </div>
 
-      {/* Only show inline message if it's NOT a winning (green) message */}
+      {/* Inline error message (if not solved) */}
       {message.text && message.color === "red" && (
         <div className="message" style={{ color: message.color }}>
           {message.text}
         </div>
       )}
 
-      {/* Modal for winning message */}
+      {/* Winning modal */}
       {showModal && (
         <Modal message={message.text} time={time} onClose={closeModal} />
       )}
+
+      {/* Instructions now BELOW the puzzle */}
+      <div className="instructions">
+        <p>
+          <strong>Rules:</strong>
+        </p>
+        <ul>
+          <li>No more than half of each row or column can be suns or moons.</li>
+          <li>Avoid having three of the same symbol in a row or column.</li>
+          <li>
+            Cells connected by <span className="equal-hint">"="</span> must have
+            the same symbol.
+          </li>
+          <li>
+            Cells connected by <span className="opposite-hint">"X"</span> must
+            have different symbols.
+          </li>
+        </ul>
+      </div>
     </div>
   );
 }
