@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:svgjs="http://svgjs.dev/svgjs" width="64" height="64"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" fill="none">
+  <!-- Background Square -->
+  <rect x="2" y="2" width="60" height="60" rx="10" fill="#1E3A8A" stroke="black" stroke-width="4"></rect>
+
+  <!-- Grid Structure -->
+  <line x1="21" y1="10" x2="21" y2="54" stroke="white" stroke-width="3"></line>
+  <line x1="42" y1="10" x2="42" y2="54" stroke="white" stroke-width="3"></line>
+  <line x1="10" y1="21" x2="54" y2="21" stroke="white" stroke-width="3"></line>
+  <line x1="10" y1="42" x2="54" y2="42" stroke="white" stroke-width="3"></line>
+
+  <!-- Question Mark in Center -->
+  <path d="M32 38C32 33 38 32 38 26C38 22 35 20 32 20C29 20 26 22 26 24" stroke="yellow" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"></path>
+  <circle cx="32" cy="45" r="2" fill="yellow"></circle>
+</svg><style>@media (prefers-color-scheme: light) { :root { filter: none; } }
+@media (prefers-color-scheme: dark) { :root { filter: none; } }
+</style></svg>
