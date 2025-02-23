@@ -168,17 +168,6 @@
   /* Just an empty cell at row/col intersections of constraints */
 }
 
-/* Icons for suns and moons */
-.sun {
-  color: #f5a623;
-  font-size: 22px;
-}
-
-.moon {
-  color: #4a90e2;
-  font-size: 22px;
-}
-
 /* Messages */
 .message {
   margin-top: 20px;

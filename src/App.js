@@ -309,6 +309,66 @@ function generatePuzzle(difficulty) {
   };
 }
 
+// Example: Inline within App.js (near the top or bottom of the file)
+function SunIcon({ size = 24 }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <defs>
+        <radialGradient id="sunGradient" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor="#FFD54F" />
+          <stop offset="100%" stopColor="#FFA726" />
+        </radialGradient>
+      </defs>
+      {/* A simple circle without rays */}
+      <circle cx="12" cy="12" r="10" fill="url(#sunGradient)" />
+    </svg>
+  );
+}
+
+function MoonIcon({ size = 24 }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 512 512"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      {/*
+        1) Move the origin to the center (256,256).
+        2) Flip horizontally (scale x by -1).
+        3) Scale up to fill more space (1.4).
+        4) Move back by translating -256,-256.
+      */}
+      <g transform="translate(256,256) scale(-1.4,1.4) translate(-256,-256)">
+        <path
+          fill="#4A90E2"
+          stroke="none"
+          d="
+            M349.852,343.15
+              c-49.875,49.916-131.083,49.916-181,0
+              c-49.916-49.918-49.916-131.125,0-181.021
+              c13.209-13.187,29.312-23.25,47.832-29.812
+              c5.834-2.042,12.293-0.562,16.625,3.792
+              c4.376,4.375,5.855,10.833,3.793,16.625
+              c-12.542,35.375-4,73.666,22.25,99.917
+              c26.209,26.228,64.5,34.75,99.916,22.25
+              c5.792-2.062,12.271-0.582,16.625,3.793
+              c4.376,4.332,5.834,10.812,3.771,16.625
+              C373.143,313.838,363.06,329.941,349.852,343.15
+            z
+          "
+        />
+      </g>
+    </svg>
+  );
+}
+
 // ---------------- React Components ----------------
 
 function PuzzleBoard({ puzzle, givens, onCellClick, errorCells, puzzleData }) {
@@ -362,11 +422,8 @@ function PuzzleBoard({ puzzle, givens, onCellClick, errorCells, puzzleData }) {
             }`}
             onClick={() => onCellClick(r, c)}
           >
-            {puzzle[r][c] !== null && (
-              <span className={puzzle[r][c] ? "sun" : "moon"}>
-                {puzzle[r][c] ? "☀" : "☾"}
-              </span>
-            )}
+            {puzzle[r][c] !== null &&
+              (puzzle[r][c] ? <SunIcon size={24} /> : <MoonIcon size={24} />)}
           </div>
         );
       }
